@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { classifyProtocol } from './automata'
 
-const API_URL = 'http://localhost:5000/api/packets'
+// LIVE RENDER BACKEND CONNECTION
+const API_URL = 'https://netguard-backend-re3l.onrender.com/api/packets'
 
 // ------------------------------
 // 1. INPUT VALIDATION
@@ -158,7 +159,7 @@ function DfaDiagram({ protocol }) {
             OTHER
           </text>
 
-          {/* q1 to qReject: any further symbol */}
+          {/* q1 to qReject */}
           <path
             d="M342 65 Q465 65 578 160"
             stroke={normalColor}
@@ -167,7 +168,7 @@ function DfaDiagram({ protocol }) {
             markerEnd="url(#dfaArrow)"
           />
 
-          {/* q2 to qReject: any further symbol */}
+          {/* q2 to qReject */}
           <path
             d="M342 185 L570 185"
             stroke={normalColor}
@@ -176,7 +177,7 @@ function DfaDiagram({ protocol }) {
             markerEnd="url(#dfaArrow)"
           />
 
-          {/* q3 to qReject: any further symbol */}
+          {/* q3 to qReject */}
           <path
             d="M342 305 Q465 305 578 210"
             stroke={normalColor}
@@ -393,18 +394,13 @@ function DfaDiagram({ protocol }) {
 
 function App() {
   const [packets, setPackets] = useState([])
-
   const [search, setSearch] = useState('')
   const [source, setSource] = useState('')
   const [destination, setDestination] = useState('')
   const [protocol, setProtocol] = useState('TCP')
-
-  // Tracks which packet's DFA path should be highlighted
   const [diagramProtocol, setDiagramProtocol] = useState('TCP')
-
   const [sourcePort, setSourcePort] = useState('')
   const [destinationPort, setDestinationPort] = useState('')
-
   const [message, setMessage] = useState('')
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -453,7 +449,6 @@ function App() {
 
     const errors = []
 
-    // Validate IP addresses
     if (!isValidIP(source.trim())) {
       errors.push('Invalid source IP address.')
     }
@@ -462,14 +457,12 @@ function App() {
       errors.push('Invalid destination IP address.')
     }
 
-    // Classify protocol using DFA
     const dfaResult = classifyProtocol(protocol)
 
     if (!dfaResult.accepted) {
       errors.push('Unsupported network protocol.')
     }
 
-    // Validate TCP and UDP ports
     if (protocol === 'TCP' || protocol === 'UDP') {
       if (!isValidPort(sourcePort)) {
         errors.push('Source port must be between 0 and 65535.')
@@ -480,7 +473,6 @@ function App() {
       }
     }
 
-    // Prepare packet for backend
     const newPacket = {
       sourceIP: source.trim(),
       destinationIP: destination.trim(),
@@ -512,10 +504,7 @@ function App() {
 
       const savedPacket = formatPacket(data.packet)
 
-      // Update dashboard with MongoDB record
       setPackets(previous => [savedPacket, ...previous])
-
-      // Keep the submitted packet's DFA path highlighted
       setDiagramProtocol(savedPacket.protocol)
 
       setMessage(
@@ -524,13 +513,11 @@ function App() {
           : 'Packet saved, but validation failed. Check the validation errors.'
       )
 
-      // Clear form
       setSource('')
       setDestination('')
       setProtocol('TCP')
       setSourcePort('')
       setDestinationPort('')
-
     } catch (error) {
       console.error('Saving packet error:', error)
 
@@ -570,8 +557,6 @@ function App() {
 
   return (
     <div className="app">
-
-      {/* Header */}
       <header className="header">
         <div>
           <h1>NetGuard</h1>
@@ -582,19 +567,15 @@ function App() {
       </header>
 
       <main className="container">
-
-        {/* Dashboard introduction */}
         <section className="welcome">
           <h2>Network Packet Dashboard</h2>
           <p>Validate, classify and monitor network packet records.</p>
         </section>
 
-        {/* Backend errors */}
         {apiError && (
           <p className="result-message">{apiError}</p>
         )}
 
-        {/* Dashboard statistics */}
         <section className="stats">
           <div className="stat-card">
             <h3>Total Packets</h3>
@@ -612,15 +593,12 @@ function App() {
           </div>
         </section>
 
-        {/* COMPLETE DFA DIAGRAM AND TRANSITION TABLE */}
         <DfaDiagram protocol={diagramProtocol} />
 
-        {/* Add Packet Form */}
         <section className="panel">
           <h2>Add Network Packet</h2>
 
           <form onSubmit={addPacket} className="packet-form">
-
             <label>Source IP Address</label>
             <input
               type="text"
@@ -691,7 +669,6 @@ function App() {
             >
               {isSaving ? 'Saving Packet...' : 'Validate and Add Packet'}
             </button>
-
           </form>
 
           {message && (
@@ -699,7 +676,6 @@ function App() {
           )}
         </section>
 
-        {/* Packet Records */}
         <section className="panel">
           <h2>Packet Records</h2>
 
@@ -772,7 +748,6 @@ function App() {
           </div>
         </section>
 
-        {/* Validation Errors */}
         <section className="panel">
           <h2>Validation Errors</h2>
 
@@ -794,11 +769,9 @@ function App() {
           )}
         </section>
 
-        {/* Footer */}
         <footer>
           <p>NetGuard | Network Packet Validation System</p>
         </footer>
-
       </main>
     </div>
   )
