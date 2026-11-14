@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { classifyProtocol } from './automata'
 
@@ -406,6 +406,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
+  // Reference to the DFA diagram section
+  const dfaSectionRef = useRef(null)
+
   // ------------------------------
   // FETCH PACKETS FROM MONGODB
   // ------------------------------
@@ -593,7 +596,10 @@ function App() {
           </div>
         </section>
 
-        <DfaDiagram protocol={diagramProtocol} />
+        {/* DFA diagram section with scroll reference */}
+        <div ref={dfaSectionRef}>
+          <DfaDiagram protocol={diagramProtocol} />
+        </div>
 
         <section className="panel">
           <h2>Add Network Packet</h2>
@@ -735,7 +741,14 @@ function App() {
                         <button
                           type="button"
                           className="dfa-view-button"
-                          onClick={() => setDiagramProtocol(packet.protocol)}
+                          onClick={() => {
+                            setDiagramProtocol(packet.protocol)
+
+                            dfaSectionRef.current?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'start',
+                            })
+                          }}
                         >
                           View DFA
                         </button>
