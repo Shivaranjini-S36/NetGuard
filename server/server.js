@@ -6,12 +6,15 @@ require('dotenv').config()
 
 const app = express()
 
-// Middleware
+// ------------------------------
+// 1. MIDDLEWARE
+// ------------------------------
+
 app.use(cors())
 app.use(express.json())
 
 // ------------------------------
-// 1. PACKET DATABASE SCHEMA
+// 2. PACKET DATABASE SCHEMA
 // ------------------------------
 
 const packetSchema = new mongoose.Schema({
@@ -64,9 +67,8 @@ const packetSchema = new mongoose.Schema({
 
 const Packet = mongoose.model('Packet', packetSchema)
 
-
 // ------------------------------
-// 2. IPV4 ADDRESS VALIDATION
+// 3. IPV4 ADDRESS VALIDATION
 // ------------------------------
 
 function isValidIP(ip) {
@@ -79,13 +81,16 @@ function isValidIP(ip) {
   return typeof ip === 'string' && ipRegex.test(ip)
 }
 
-
 // ------------------------------
-// 3. PORT NUMBER VALIDATION
+// 4. PORT NUMBER VALIDATION
 // ------------------------------
 
 function isValidPort(port) {
-  if (port === null || port === undefined || String(port).trim() === '') {
+  if (
+    port === null ||
+    port === undefined ||
+    String(port).trim() === ''
+  ) {
     return false
   }
 
@@ -98,9 +103,8 @@ function isValidPort(port) {
   )
 }
 
-
 // ------------------------------
-// 4. DFA PROTOCOL CLASSIFICATION
+// 5. DFA PROTOCOL CLASSIFICATION
 // ------------------------------
 
 const transitionTable = {
@@ -163,18 +167,16 @@ function classifyProtocol(protocol) {
   }
 }
 
-
 // ------------------------------
-// 5. TEST BACKEND ROUTE
+// 6. TEST BACKEND ROUTE
 // ------------------------------
 
 app.get('/', (req, res) => {
   res.send('NetGuard Backend is running!')
 })
 
-
 // ------------------------------
-// 6. SAVE PACKET
+// 7. SAVE PACKET
 // ------------------------------
 
 app.post('/api/packets', async (req, res) => {
@@ -236,7 +238,6 @@ app.post('/api/packets', async (req, res) => {
 
     // Validate TCP and UDP ports
     if (safeProtocol === 'TCP' || safeProtocol === 'UDP') {
-
       if (!isValidPort(sourcePort)) {
         errors.push('Source port must be between 0 and 65535.')
       } else {
@@ -256,7 +257,7 @@ app.post('/api/packets', async (req, res) => {
       finalDestinationPort = 'N/A'
     }
 
-    // Create packet using backend validation results
+    // Create packet
     const packet = new Packet({
       sourceIP: safeSourceIP,
       destinationIP: safeDestinationIP,
@@ -299,9 +300,8 @@ app.post('/api/packets', async (req, res) => {
   }
 })
 
-
 // ------------------------------
-// 7. RETRIEVE ALL PACKETS
+// 8. RETRIEVE ALL PACKETS
 // ------------------------------
 
 app.get('/api/packets', async (req, res) => {
@@ -322,19 +322,26 @@ app.get('/api/packets', async (req, res) => {
   }
 })
 
+// ------------------------------
+// 9. CONNECT MONGODB AND START SERVER
+// ------------------------------
 
-// ------------------------------
-// 8. CONNECT MONGODB AND START SERVER
-// ------------------------------
+const PORT = process.env.PORT || 5000
+
+if (!process.env.MONGO_URI) {
+  console.error('MONGO_URI is missing. Please configure your environment variable.')
+  process.exit(1)
+}
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected successfully!')
 
-    app.listen(5000, () => {
-      console.log('NetGuard backend running on port 5000')
+    app.listen(PORT, () => {
+      console.log(`NetGuard backend running on port ${PORT}`)
     })
   })
   .catch((error) => {
     console.error('MongoDB connection failed:', error.message)
+    process.exit(1)
   })
